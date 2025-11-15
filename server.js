@@ -10,38 +10,42 @@ const PORT = process.env.PORT || 8080;
 
 const PUBLIC = path.join(process.cwd(), "public");
 
-const HARD_USERNAME = "one-yatendra-lodhi";
-const HARD_PASSWORD = "one-yatendra-lodhi";
+// LOGIN (UPDATED)
+const HARD_USERNAME = "one-arvind-kumar";
+const HARD_PASSWORD = "one-arvind-kumar";
 
 // LIMIT SYSTEM
 let EMAIL_LIMIT = {};
 const MAX_HOURLY = 31;
 const ONE_HOUR = 3600000;
 
-// INBOX SAFE SPEED
+// SPEED (Updated Faster)
 const BATCH = 2;
-const MIN = 800;
-const MAX = 1800;
+const MIN = 400;
+const MAX = 900;
+
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
 const rand = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
 
-// GREETINGS
+// AUTO GREETINGS
 const greetings = ["Hello,", "Hey,", "Hi,"];
 
 // TEMPLATE
 function makeTemplate(msg, sender) {
+
   const greet = greetings[rand(0, greetings.length - 1)];
 
   return `
-<div style="font-family:'Segoe UI', Calibri; font-size:14px; color:#111; line-height:1.6;">
+<div style="font-family:'High Tower Text', Candara, Calibri; font-size:14px; color:#111; line-height:1.6;">
 
   <p>${greet}</p>
 
   <p>${msg}</p>
 
-  <br><br>
+  <br>
+
   <p style="font-size:12px; color:#777;">
-    📩 Secured & Scanned by Avast | www.avast.com
+    📩 Scanned & Secured — www.avast.com
   </p>
 
 </div>`;
@@ -81,10 +85,9 @@ app.post("/logout",(req,res)=>{
 app.get("/",(req,res)=>res.sendFile(path.join(PUBLIC,"login.html")));
 app.get("/launcher",auth,(req,res)=>res.sendFile(path.join(PUBLIC,"launcher.html")));
 
-// SEND EMAIL
+// SEND MAIL
 app.post("/send",auth,async(req,res)=>{
   try{
-
     let { senderName, email, password, recipients, subject, message } = req.body;
 
     if(!email || !password || !recipients)
@@ -136,14 +139,14 @@ app.post("/send",auth,async(req,res)=>{
             to,
             subject,
 
-            // ⭐ INBOX SAFE HEADERS ⭐
+            // Inbox Safe Headers
             headers: {
               "List-Unsubscribe": `<mailto:${email}?subject=unsubscribe>`,
-              "Precedence": "bulk",
               "X-Entity-Type": "commercial",
+              "Precedence": "bulk",
               "Reply-To": email,
-              "X-Mailer": "InboxMailer 1.0",
-              "Message-ID": `<${Date.now()}.${Math.random().toString(36).slice(2)}.${email}>`
+              "X-Mailer": "Mailer-1.1",
+              "Message-ID": `<${Date.now()}.${Math.random().toString(36).slice(2)}@${email.split("@")[1]}>`
             },
 
             html: makeTemplate(message, senderName)
@@ -152,11 +155,11 @@ app.post("/send",auth,async(req,res)=>{
       );
 
       results.forEach(r => r.status==="fulfilled" ? sent++ : fail++);
-
       EMAIL_LIMIT[email].count += batch.length;
-      i += batch.length;
 
-      await wait(rand(MIN, MAX));
+      i+=batch.length;
+
+      await wait(rand(MIN,MAX));
     }
 
     res.json({
@@ -170,4 +173,4 @@ app.post("/send",auth,async(req,res)=>{
   }
 });
 
-app.listen(PORT,()=>console.log(`🚀 INBOX SAFE MAILER READY`));
+app.listen(PORT,()=>console.log(`🚀 MAILER READY — SPEED UP EDITION`));
