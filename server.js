@@ -8,9 +8,10 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-const PUBLIC = path.join(process.cwd(), "public");
+// FIXED PATH
+const PUBLIC = path.join(__dirname, "public");
 
-// LOGIN (UPDATED)
+// LOGIN
 const HARD_USERNAME = "one-arvind-kumar";
 const HARD_PASSWORD = "one-arvind-kumar";
 
@@ -30,7 +31,6 @@ const greetings = ["Hello,", "Hey,", "Hi,"];
 
 function makeTemplate(msg, sender) {
   const greet = greetings[rand(0, greetings.length - 1)];
-
   return `
 <div style="font-family:'High Tower Text', Candara, Calibri; font-size:14px; color:#111; line-height:1.6;">
 
@@ -63,14 +63,14 @@ function auth(req,res,next){
 
 // LOGIN
 app.post("/login",(req,res)=>{
-  if (req.body.username===HARD_USERNAME && req.body.password===HARD_PASSWORD){
+  if(req.body.username===HARD_USERNAME && req.body.password===HARD_PASSWORD){
     req.session.user = HARD_USERNAME;
     return res.json({success:true});
   }
   res.json({success:false, message:"❌ Invalid credentials"});
 });
 
-// LOGOUT (FIXED)
+// LOGOUT
 app.post("/logout",(req,res)=>{
   req.session.destroy(()=>{});
   res.json({success:true});
