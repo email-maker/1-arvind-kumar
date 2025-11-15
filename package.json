@@ -1,5 +1,5 @@
 {
-  "name": "fast-mailer-first-version-clean",
+  "name": "fast-mailer-inbox-safe",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
