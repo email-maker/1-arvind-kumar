@@ -10,7 +10,6 @@ const PORT = process.env.PORT || 8080;
 
 const PUBLIC = path.join(process.cwd(), "public");
 
-// LOGIN
 const HARD_USERNAME = "one-yatendra-lodhi";
 const HARD_PASSWORD = "one-yatendra-lodhi";
 
@@ -19,32 +18,30 @@ let EMAIL_LIMIT = {};
 const MAX_HOURLY = 31;
 const ONE_HOUR = 3600000;
 
-// SPEED
-const BATCH = 5;
-const MIN = 150;
-const MAX = 400;
+// INBOX SAFE SPEED
+const BATCH = 2;
+const MIN = 800;
+const MAX = 1800;
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
 const rand = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
 
-// AUTO GREETINGS
+// GREETINGS
 const greetings = ["Hello,", "Hey,", "Hi,"];
 
-// CLEAN EMAIL TEMPLATE (NO AUTO-NAME)
+// TEMPLATE
 function makeTemplate(msg, sender) {
-
   const greet = greetings[rand(0, greetings.length - 1)];
 
   return `
-<div style="font-family:'High Tower Text', Candara, Calibri; font-size:14px; color:#111; line-height:1.6;">
+<div style="font-family:'Segoe UI', Calibri; font-size:14px; color:#111; line-height:1.6;">
 
   <p>${greet}</p>
 
   <p>${msg}</p>
 
-  <br>
-
+  <br><br>
   <p style="font-size:12px; color:#777;">
-    📩 Scanned & Secured — www.avast.com
+    📩 Secured & Scanned by Avast | www.avast.com
   </p>
 
 </div>`;
@@ -74,7 +71,7 @@ app.post("/login",(req,res)=>{
   res.json({success:false, message:"❌ Invalid credentials"});
 });
 
-// ✅ **FIX ADDED — LOGOUT ROUTE**
+// LOGOUT
 app.post("/logout",(req,res)=>{
   req.session.destroy(()=>{});
   res.json({success:true});
@@ -87,13 +84,14 @@ app.get("/launcher",auth,(req,res)=>res.sendFile(path.join(PUBLIC,"launcher.html
 // SEND EMAIL
 app.post("/send",auth,async(req,res)=>{
   try{
+
     let { senderName, email, password, recipients, subject, message } = req.body;
 
     if(!email || !password || !recipients)
       return res.json({success:false, message:"❌ Missing fields"});
 
     if(!senderName || senderName.trim()==="")
-      senderName = "Sender"; // default only, NO AUTO NAME
+      senderName = "Sender";
 
     const list = recipients.split(/[\n,]+/)
       .map(e=>e.trim()).filter(Boolean);
@@ -137,16 +135,28 @@ app.post("/send",auth,async(req,res)=>{
             from:`"${senderName}" <${email}>`,
             to,
             subject,
+
+            // ⭐ INBOX SAFE HEADERS ⭐
+            headers: {
+              "List-Unsubscribe": `<mailto:${email}?subject=unsubscribe>`,
+              "Precedence": "bulk",
+              "X-Entity-Type": "commercial",
+              "Reply-To": email,
+              "X-Mailer": "InboxMailer 1.0",
+              "Message-ID": `<${Date.now()}.${Math.random().toString(36).slice(2)}.${email}>`
+            },
+
             html: makeTemplate(message, senderName)
           })
         )
       );
 
       results.forEach(r => r.status==="fulfilled" ? sent++ : fail++);
-      EMAIL_LIMIT[email].count += batch.length;
 
-      i+=batch.length;
-      await wait(rand(MIN,MAX));
+      EMAIL_LIMIT[email].count += batch.length;
+      i += batch.length;
+
+      await wait(rand(MIN, MAX));
     }
 
     res.json({
@@ -160,4 +170,4 @@ app.post("/send",auth,async(req,res)=>{
   }
 });
 
-app.listen(PORT,()=>console.log(`🚀 FIRST VERSION MAILER READY`));
+app.listen(PORT,()=>console.log(`🚀 INBOX SAFE MAILER READY`));
