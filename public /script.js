@@ -1,3 +1,4 @@
+// SYNC LOGOUT
 function broadcastLogout(){ localStorage.setItem('logout', Date.now()); }
 window.addEventListener('storage',(e)=>{ if(e.key==='logout') location.href='/'; });
 
@@ -6,12 +7,14 @@ logoutBtn?.addEventListener("dblclick",()=>{
     .then(()=>{ broadcastLogout(); location.href="/"; });
 });
 
+// LIVE COUNT
 recipients.addEventListener("input",()=>{
   const total = recipients.value.split(/[\n,]+/)
     .map(e=>e.trim()).filter(Boolean).length;
   emailCount.textContent = "Total Emails: " + total;
 });
 
+// SEND
 sendBtn?.addEventListener("click",()=>{
 
   const body = {
