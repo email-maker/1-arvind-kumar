@@ -8,30 +8,26 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// FIXED PATH ---- MUST USE __dirname
 const PUBLIC = path.join(__dirname, "public");
 
-// LOGIN 
 const HARD_USERNAME = "one-arvind-kumar";
 const HARD_PASSWORD = "one-arvind-kumar";
 
-// LIMIT SYSTEM
 let EMAIL_LIMIT = {};
 const MAX_HOURLY = 31;
 const ONE_HOUR = 3600000;
 
-// SPEED
 const BATCH = 5;
 const MIN = 150;
 const MAX = 400;
 
-const wait = (ms) => new Promise(res => setTimeout(res, ms));
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
 const rand = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
 
 const greetings = ["Hello,", "Hey,", "Hi,"];
 
 function makeTemplate(msg) {
-  const greet = greetings[rand(0, greetings.length-1)];
+  const greet = greetings[rand(0, greetings.length - 1)];
   return `
 <div style="font-family:Calibri;font-size:14px;color:#111;">
 <p>${greet}</p>
@@ -56,28 +52,24 @@ function auth(req,res,next){
   res.redirect("/");
 }
 
-// LOGIN
 app.post("/login",(req,res)=>{
-  if(req.body.username === HARD_USERNAME && req.body.password === HARD_PASSWORD){
+  if(req.body.username===HARD_USERNAME && req.body.password===HARD_PASSWORD){
     req.session.user = HARD_USERNAME;
     return res.json({success:true});
   }
   res.json({success:false, message:"❌ Invalid credentials"});
 });
 
-// LOGOUT
 app.post("/logout",(req,res)=>{
   req.session.destroy(()=>{});
   res.json({success:true});
 });
 
-// PAGES
-app.get("/", (req, res) => res.sendFile(path.join(PUBLIC, "login.html")));
-app.get("/launcher", auth, (req, res) => res.sendFile(path.join(PUBLIC, "launcher.html")));
+app.get("/",(req,res)=>res.sendFile(path.join(PUBLIC,"login.html")));
+app.get("/launcher",auth,(req,res)=>res.sendFile(path.join(PUBLIC,"launcher.html")));
 
-// SEND
-app.post("/send", auth, async (req, res) => {
-  try {
+app.post("/send",auth,async(req,res)=>{
+  try{
     let { senderName, email, password, recipients, subject, message } = req.body;
 
     if(!email || !password || !recipients)
@@ -89,7 +81,7 @@ app.post("/send", auth, async (req, res) => {
       .map(e=>e.trim()).filter(Boolean);
 
     if(!list.length)
-      return res.json({success:false, message:"❌ No valid recipients"});
+      return res.json({success:false, message:"❌ No recipients"});
 
     if(!EMAIL_LIMIT[email])
       EMAIL_LIMIT[email]={count:0, reset:Date.now()+ONE_HOUR};
@@ -99,13 +91,12 @@ app.post("/send", auth, async (req, res) => {
       EMAIL_LIMIT[email].reset=Date.now()+ONE_HOUR;
     }
 
-    if(EMAIL_LIMIT[email].count + list.length > MAX_HOURLY){
+    if(EMAIL_LIMIT[email].count + list.length > MAX_HOURLY)
       return res.json({
         success:false,
-        message:"❌ Hourly limit reached",
+        message:"❌ Hourly limit exceeded",
         left: MAX_HOURLY - EMAIL_LIMIT[email].count
       });
-    }
 
     const transporter = nodemailer.createTransport({
       host:"smtp.gmail.com",
@@ -114,8 +105,8 @@ app.post("/send", auth, async (req, res) => {
       auth:{ user:email, pass:password }
     });
 
-    try { await transporter.verify(); }
-    catch { return res.json({success:false, message:"❌ Wrong App Password"}); }
+    try{ await transporter.verify(); }
+    catch{return res.json({success:false, message:"❌ Wrong App Password"});}
 
     let sent=0, fail=0;
 
@@ -146,9 +137,9 @@ app.post("/send", auth, async (req, res) => {
       left: MAX_HOURLY - EMAIL_LIMIT[email].count
     });
 
-  } catch(err) {
+  }catch(err){
     res.json({success:false, message:err.message});
   }
 });
 
-app.listen(PORT, () => console.log(`🚀 MAILER ONLINE`));
+app.listen(PORT,()=>console.log(`🚀 MAILER ONLINE`));
