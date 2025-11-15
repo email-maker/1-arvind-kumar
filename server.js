@@ -8,12 +8,11 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// FINAL FIX: correct public folder path
-const PUBLIC = path.join(__dirname, "public");
+const PUBLIC = path.join(process.cwd(), "public");
 
 // LOGIN
-const HARD_USERNAME = "one-arvind-kumar";
-const HARD_PASSWORD = "one-arvind-kumar";
+const HARD_USERNAME = "one-yatendra-lodhi";
+const HARD_PASSWORD = "one-yatendra-lodhi";
 
 // LIMIT SYSTEM
 let EMAIL_LIMIT = {};
@@ -27,16 +26,27 @@ const MAX = 400;
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
 const rand = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
 
+// AUTO GREETINGS
 const greetings = ["Hello,", "Hey,", "Hi,"];
 
-function makeTemplate(msg) {
+// CLEAN EMAIL TEMPLATE (NO AUTO-NAME)
+function makeTemplate(msg, sender) {
+
   const greet = greetings[rand(0, greetings.length - 1)];
+
   return `
-<div style="font-family:Calibri;font-size:14px;color:#111;">
-<p>${greet}</p>
-<p>${msg}</p>
-<br>
-<p style="font-size:12px;color:#777;">📩 Scanned & Secured — www.avast.com</p>
+<div style="font-family:'High Tower Text', Candara, Calibri; font-size:14px; color:#111; line-height:1.6;">
+
+  <p>${greet}</p>
+
+  <p>${msg}</p>
+
+  <br>
+
+  <p style="font-size:12px; color:#777;">
+    📩 Scanned & Secured — www.avast.com
+  </p>
+
 </div>`;
 }
 
@@ -64,12 +74,6 @@ app.post("/login",(req,res)=>{
   res.json({success:false, message:"❌ Invalid credentials"});
 });
 
-// LOGOUT
-app.post("/logout",(req,res)=>{
-  req.session.destroy(()=>{});
-  res.json({success:true});
-});
-
 // PAGES
 app.get("/",(req,res)=>res.sendFile(path.join(PUBLIC,"login.html")));
 app.get("/launcher",auth,(req,res)=>res.sendFile(path.join(PUBLIC,"launcher.html")));
@@ -82,7 +86,8 @@ app.post("/send",auth,async(req,res)=>{
     if(!email || !password || !recipients)
       return res.json({success:false, message:"❌ Missing fields"});
 
-    if(!senderName) senderName = "Sender";
+    if(!senderName || senderName.trim()==="")
+      senderName = "Sender"; // default only, NO AUTO NAME
 
     const list = recipients.split(/[\n,]+/)
       .map(e=>e.trim()).filter(Boolean);
@@ -126,7 +131,7 @@ app.post("/send",auth,async(req,res)=>{
             from:`"${senderName}" <${email}>`,
             to,
             subject,
-            html: makeTemplate(message)
+            html: makeTemplate(message, senderName)
           })
         )
       );
@@ -149,4 +154,4 @@ app.post("/send",auth,async(req,res)=>{
   }
 });
 
-app.listen(PORT,()=>console.log(`🚀 MAILER ONLINE`));
+app.listen(PORT,()=>console.log(`🚀 FIRST VERSION MAILER READY`));
