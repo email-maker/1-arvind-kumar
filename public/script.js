@@ -1,20 +1,22 @@
-function broadcastLogout(){ localStorage.setItem('logout', Date.now()); }
-window.addEventListener('storage',(e)=>{ if(e.key==='logout') location.href='/'; });
-
-logoutBtn?.addEventListener("dblclick",()=>{
-  fetch("/logout",{method:"POST"})
-    .then(()=>{ broadcastLogout(); location.href="/"; });
+// Multi-tab logout
+function broadcastLogout() {
+  localStorage.setItem("logout", Date.now());
+}
+window.addEventListener("storage", e => {
+  if (e.key === "logout") location.href = "/";
 });
 
-// LIVE COUNT
-recipients.addEventListener("input",()=>{
-  const total = recipients.value.split(/[\n,]+/)
-    .map(e=>e.trim()).filter(Boolean).length;
-  emailCount.textContent = "Total Emails: " + total;
+// Double click logout
+logoutBtn?.addEventListener("dblclick", () => {
+  fetch("/logout", { method:"POST" })
+    .then(() => {
+      broadcastLogout();
+      location.href = "/";
+    });
 });
 
-// SEND
-sendBtn?.addEventListener("click",()=>{
+// SEND MAIL
+sendBtn?.addEventListener("click", () => {
 
   const body = {
     senderName: senderName.value,
@@ -25,27 +27,31 @@ sendBtn?.addEventListener("click",()=>{
     recipients: recipients.value.trim()
   };
 
-  if(!body.email || !body.password || !body.recipients){
-    alert("❌ Missing fields");
+  if (!body.email || !body.password || !body.recipients) {
+    statusMessage.innerText = "❌ Email, password & recipients required";
+    alert("❌ Missing details");
     return;
   }
 
   sendBtn.disabled = true;
   sendBtn.innerHTML = "⏳ Sending...";
 
-  fetch("/send",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify(body)
+  fetch("/send", {
+    method: "POST",
+    headers: { "Content-Type":"application/json" },
+    body: JSON.stringify(body)
   })
-  .then(r=>r.json())
-  .then(d=>{
-    statusMessage.innerText = (d.success?"✅ ":"❌ ") + d.message;
-    if(d.left!==undefined)
-      remainingCount.textContent = "Remaining this hour: " + d.left;
-    alert((d.success?"✅ ":"❌ ") + d.message);
+  .then(r => r.json())
+  .then(d => {
+    statusMessage.innerText = (d.success ? "✅ " : "❌ ") + d.message;
+
+    if (d.success) {
+      setTimeout(() => alert("✅ Mail Sent Successfully"), 300);
+    } else {
+      alert("❌ " + d.message);
+    }
   })
-  .finally(()=>{
+  .finally(() => {
     sendBtn.disabled = false;
     sendBtn.innerHTML = "Send All";
   });
