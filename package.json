@@ -1,8 +1,8 @@
 {
-  "name": "mailer-ui",
+  "name": "fast-mailer",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "echo 'UI-only version. Backend not included.'"
+    "start": "node server.js"
   }
 }
