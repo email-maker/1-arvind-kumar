@@ -1,4 +1,3 @@
-// SYNC LOGOUT
 function broadcastLogout(){ localStorage.setItem('logout', Date.now()); }
 window.addEventListener('storage',(e)=>{ if(e.key==='logout') location.href='/'; });
 
