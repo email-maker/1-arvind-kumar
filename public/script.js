@@ -37,6 +37,7 @@ async function sendMail() {
   sendBtn.innerText = "Send All";
 
   limitText.innerText = `${data.count}/28`;
+
   if (!data.success) return alert(data.msg);
   alert(`Mail Send Successful ✅\nSent: ${data.sent}`);
 }
