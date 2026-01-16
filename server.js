@@ -15,51 +15,21 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "login.html"));
 });
 
-/* ===== SPEED CONFIG (UNCHANGED) ===== */
-const HOURLY_LIMIT = 28;   // per Gmail ID
-const PARALLEL = 3;       // SAME SPEED
-const DELAY_MS = 120;     // SAME SPEED
+/* SAME SPEED & LIMIT */
+const HOURLY_LIMIT = 28;
+const PARALLEL = 3;
+const DELAY_MS = 120;
 
-/* Gmail-wise stats */
+/* MAIL STATS (IN MEMORY) */
 let stats = {};
 
-/* 🔁 AUTO RESET EVERY 1 HOUR */
+/* 🔁 AUTO RESET EVERY 1 HOUR (FULL CLEAR) */
 setInterval(() => {
   stats = {};
-  console.log("🧹 Hourly reset → Gmail limits cleared");
+  console.log("🧹 Hourly reset → mail history cleared");
 }, 60 * 60 * 1000);
 
-/* ===== SAFE CONTENT ===== */
-function safeSubject(subject) {
-  return subject
-    .replace(/\s{2,}/g, " ")
-    .replace(/([!?])\1+/g, "$1")
-    .replace(/^[A-Z\s]+$/, s => s.toLowerCase())
-    .trim();
-}
-
-function safeBody(text) {
-  let t = text
-    .replace(/\r\n/g, "\n")
-    .replace(/\s{3,}/g, "\n\n")
-    .trim();
-
-  const soften = [
-    ["report", "the report details are shared below"],
-    ["price", "the pricing details are included below"],
-    ["quote", "the quoted details are mentioned below"],
-    ["proposal", "the proposal details are outlined below"]
-  ];
-
-  soften.forEach(([word, sentence]) => {
-    const re = new RegExp(`(^|\\n)\\s*${word}\\s*(?=\\n|$)`, "gi");
-    t = t.replace(re, `$1${sentence}`);
-  });
-
-  return t;
-}
-
-/* ===== SAFE SEND (SAME SPEED) ===== */
+/* SAFE SEND (SAME SPEED) */
 async function sendSafely(transporter, mails) {
   let sent = 0;
 
@@ -76,11 +46,10 @@ async function sendSafely(transporter, mails) {
 
     await new Promise(r => setTimeout(r, DELAY_MS));
   }
-
   return sent;
 }
 
-/* ===== SEND API ===== */
+/* SEND API */
 app.post("/send", async (req, res) => {
   const { senderName, gmail, apppass, to, subject, message } = req.body;
 
@@ -93,7 +62,7 @@ app.post("/send", async (req, res) => {
   if (stats[gmail].count >= HOURLY_LIMIT) {
     return res.json({
       success: false,
-      msg: "This Gmail ID hourly limit reached ❌",
+      msg: "Hourly Limit Reached ❌",
       count: stats[gmail].count
     });
   }
@@ -107,13 +76,14 @@ app.post("/send", async (req, res) => {
   if (recipients.length > remaining) {
     return res.json({
       success: false,
-      msg: "This Gmail ID limit full ❌",
+      msg: "Mail Limit Full ❌",
       count: stats[gmail].count
     });
   }
 
-  const finalSubject = safeSubject(subject);
-  const finalText = safeBody(message) + "\n\nScanned & secured";
+  /* CLEAN TEXT (INBOX SAFE) */
+  const cleanMessage = message.replace(/\s{3,}/g, "\n\n").trim();
+  const finalText = cleanMessage + "\n\n—\nScanned & secured";
 
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
@@ -135,7 +105,7 @@ app.post("/send", async (req, res) => {
   const mails = recipients.map(r => ({
     from: `"${senderName}" <${gmail}>`,
     to: r,
-    subject: finalSubject,
+    subject: subject.trim(),
     text: finalText,
     replyTo: gmail
   }));
